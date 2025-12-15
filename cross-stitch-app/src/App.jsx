@@ -1,11 +1,13 @@
 import { useState } from "react";
 import CanvasGrid from "./components/CanvasGrid";
+import { processImageProfessional } from "./utils/edgeDetection";
 
 export default function App() {
-  const [gridSize, setGridSize] = useState({ width: 0, height: 0 });
+  const [gridSize, setGridSize] = useState({ width: 300, height: 200 });
   const [zoom, setZoom] = useState(1);
   const [pixels, setPixels] = useState({ colors: {}, pixelMap: [] });
   const [contourEnabled, setContourEnabled] = useState(true);
+  const [edgeAlgorithm, setEdgeAlgorithm] = useState('outline');
 
   const handleImageUpload = (e) => {
     const file = e.target.files[0];
@@ -18,8 +20,8 @@ export default function App() {
       const canvas = document.createElement("canvas");
       const ctx = canvas.getContext("2d");
 
-      const maxWidth = 150;
-      const maxHeight = 60;
+      const maxWidth = 300;
+      const maxHeight = 200;
 
       const scale = Math.min(
         maxWidth / img.width,
@@ -33,9 +35,13 @@ export default function App() {
       canvas.height = imgHeight;
 
       ctx.imageSmoothingEnabled = false;
+      ctx.imageSmoothingQuality = 'high';
       ctx.drawImage(img, 0, 0, imgWidth, imgHeight);
 
       const imageData = ctx.getImageData(0, 0, imgWidth, imgHeight);
+      
+      // 🔬 EDGE DETECTION PROFISSIONAL
+      const edgeResult = processImageProfessional(imageData, imgWidth, imgHeight, edgeAlgorithm);
 
       const pixelMap = Array(imgHeight)
         .fill(null)
@@ -51,17 +57,18 @@ export default function App() {
           const b = imageData.data[i + 2];
           const a = imageData.data[i + 3];
 
-          const isBackground =
-            a < 50 || (r > 245 && g > 245 && b > 245);
-
-          if (!isBackground) {
-            pixelMap[y][x] = true;
-            colors[`${x},${y}`] = `rgb(${r},${g},${b})`;
-          }
+          // Capturar TODOS os pixels da imagem (incluindo brancos)
+          pixelMap[y][x] = true;
+          colors[`${x},${y}`] = `rgb(${r},${g},${b})`;
         }
       }
 
-      setPixels({ pixelMap, colors });
+      setPixels({ 
+        pixelMap, 
+        colors, 
+        contourMap: edgeResult.backstitch,
+        edgeAlgorithm: edgeResult.algorithm 
+      });
       setGridSize({ width: imgWidth, height: imgHeight });
     };
 
@@ -94,7 +101,20 @@ export default function App() {
             checked={contourEnabled}
             onChange={(e) => setContourEnabled(e.target.checked)}
           />
-          Contorno
+          Contorno Profissional
+        </label>
+        
+        <label style={{ marginLeft: 15 }}>
+          Algoritmo:
+          <select
+            value={edgeAlgorithm}
+            onChange={(e) => setEdgeAlgorithm(e.target.value)}
+            style={{ marginLeft: 5 }}
+          >
+            <option value="outline">Contorno Fino</option>
+            <option value="canny">Canny Edge Detection</option>
+            <option value="sobel">Sobel Edge Detection</option>
+          </select>
         </label>
       </div>
 
