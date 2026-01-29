@@ -514,7 +514,7 @@ export default function App() {
         boxShadow: '0 4px 15px rgba(0,0,0,0.2)'
       }}>
         <h1 style={{ margin: 0, fontSize: '2.5em', textShadow: '2px 2px 4px rgba(0,0,0,0.3)' }}>
-          🧵 Cross Stitch Designer Pro
+          🧵 Zaíra.Cruz
         </h1>
         <p style={{ margin: '10px 0 0 0', fontSize: '1.1em', opacity: 0.9 }}>
           Transforme suas imagens em padrões profissionais de ponto cruz
